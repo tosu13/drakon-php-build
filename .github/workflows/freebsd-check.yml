@@ -1,0 +1,27 @@
+name: FreeBSD 15.0 compatibility check
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  inspect-freebsd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Boot FreeBSD 15.0 VM and inspect ABI
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "15.0"
+          arch: x86_64
+          cpu: 2
+          mem: 4096
+          run: |
+            echo "=== RELEASE ==="
+            freebsd-version -kru
+            echo "=== OSRELDATE ==="
+            sysctl kern.osreldate
+            echo "=== LIBC SYMBOL VERSIONS ==="
+            strings /lib/libc.so.7 | grep '^FBSD_' | tail -n 5
+            echo "=== PACKAGE TOOL ==="
+            pkg -v

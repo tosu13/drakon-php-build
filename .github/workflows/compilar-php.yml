@@ -1,0 +1,44 @@
+name: Construir PHP para DRAKON (FreeBSD 15.0)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-php:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Preparar y compilar paquetes en FreeBSD 15.0
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "15.0"
+          arch: x86_64
+          cpu: 2
+          mem: 4096
+          usesh: true
+          run: |
+            set -eux
+            echo "=== SISTEMA OBJETIVO ==="
+            freebsd-version -kru
+            sysctl kern.osreldate
+            echo "=== OBTENER PORTS QUARTERLY ==="
+            git clone --depth 1 --branch 2026Q4 https://git.FreeBSD.org/ports.git /usr/ports
+            echo "=== COMPILAR PHP 8.5 Y EXTENSIONES ==="
+            make -C /usr/ports/lang/php85 package-recursive
+            make -C /usr/ports/databases/php85-mysqli package-recursive
+            make -C /usr/ports/databases/php85-pdo package-recursive
+            make -C /usr/ports/databases/php85-pdo_mysql package-recursive
+            echo "=== VALIDAR BINARIO Y SIMBOLOS ABI ==="
+            pkg install -y /usr/ports/packages/All/php85-*.pkg
+            /usr/local/bin/php -v
+            readelf -V /usr/local/bin/php | grep -E 'FBSD_1\.[89]' || true
+            echo "=== REUNIR PAQUETES ==="
+            mkdir -p "$GITHUB_WORKSPACE/paquetes-php-freebsd15"
+            find /usr/ports/packages/All -maxdepth 1 -type f -name '*.pkg' -exec cp {} "$GITHUB_WORKSPACE/paquetes-php-freebsd15/" \;
+            tar -czf "$GITHUB_WORKSPACE/paquetes-php-freebsd15.tar.gz" -C "$GITHUB_WORKSPACE" paquetes-php-freebsd15
+      - name: Publicar paquetes compilados
+        uses: actions/upload-artifact@v4
+        with:
+          name: paquetes-php-freebsd15
+          path: paquetes-php-freebsd15.tar.gz
+          if-no-files-found: error
+          retention-days: 7

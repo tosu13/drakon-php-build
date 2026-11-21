@@ -25,6 +25,9 @@ jobs:
             git --version
             echo "=== OBTENER PORTS QUARTERLY ==="
             git clone --depth 1 --branch 2026Q4 https://git.FreeBSD.org/ports.git /usr/ports
+            echo "=== CONFIGURAR PORTS PARA FREEBSD 15.0 ==="
+            export ALLOW_UNSUPPORTED_SYSTEM=YES
+            export BATCH=yes
             echo "=== COMPILAR PHP 8.5 Y EXTENSIONES ==="
             make -C /usr/ports/lang/php85 package-recursive
             make -C /usr/ports/databases/php85-mysqli package-recursive

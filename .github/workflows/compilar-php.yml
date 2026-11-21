@@ -41,12 +41,12 @@ jobs:
             make -C /usr/ports/databases/php85-pdo package-recursive
             make -C /usr/ports/databases/php85-pdo_mysql package-recursive
 
-            echo "=== LOCALIZAR PAQUETES GENERADOS ==="
-            find /usr/ports/packages -type f -name 'php85-*.pkg' -print
-            PHP_PKG="$(find /usr/ports/packages -type f -name 'php85-*.pkg' -print -quit)"
+            echo "=== LOCALIZAR PAQUETES EN EL SISTEMA ==="
+            find /usr/ports /tmp /var/cache -type f -name 'php85-*.pkg' -print
+            PHP_PKG="$(find /usr/ports /tmp /var/cache -type f -name 'php85-*.pkg' -print -quit)"
             test -n "$PHP_PKG"
             PKG_DIR="$(dirname "$PHP_PKG")"
-            echo "Directorio real de paquetes: $PKG_DIR"
+            echo "Directorio real: $PKG_DIR"
             ls -lah "$PKG_DIR"
 
             echo "=== COMPROBAR PAQUETES REQUERIDOS ==="
@@ -54,17 +54,15 @@ jobs:
               find "$PKG_DIR" -maxdepth 1 -type f -name "${name}-*.pkg" -print -quit | grep .
             done
 
-            echo "=== INSTALAR PAQUETES LOCALES ==="
+            echo "=== INSTALAR Y VALIDAR PAQUETES ==="
             pkg add "$PKG_DIR"/*.pkg
-
-            echo "=== VALIDAR PHP Y EXTENSIONES ==="
             /usr/local/bin/php -v
             /usr/local/bin/php -m | tee "$GITHUB_WORKSPACE/php-modules.txt"
             grep -E '^mysqli$' "$GITHUB_WORKSPACE/php-modules.txt"
             grep -E '^PDO$' "$GITHUB_WORKSPACE/php-modules.txt"
             grep -E '^pdo_mysql$' "$GITHUB_WORKSPACE/php-modules.txt"
 
-            echo "=== COPIAR PAQUETES AL WORKSPACE COMPARTIDO ==="
+            echo "=== EXPORTAR PAQUETES AL WORKSPACE ==="
             mkdir -p "$GITHUB_WORKSPACE/paquetes-php-freebsd15"
             find "$PKG_DIR" -maxdepth 1 -type f -name '*.pkg' -exec cp {} "$GITHUB_WORKSPACE/paquetes-php-freebsd15/" \;
             test -n "$(find "$GITHUB_WORKSPACE/paquetes-php-freebsd15" -type f -name '*.pkg' -print -quit)"

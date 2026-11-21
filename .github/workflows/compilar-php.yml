@@ -20,6 +20,9 @@ jobs:
             echo "=== SISTEMA OBJETIVO ==="
             freebsd-version -kru
             sysctl kern.osreldate
+            echo "=== INSTALAR GIT ==="
+            pkg install -y git
+            git --version
             echo "=== OBTENER PORTS QUARTERLY ==="
             git clone --depth 1 --branch 2026Q4 https://git.FreeBSD.org/ports.git /usr/ports
             echo "=== COMPILAR PHP 8.5 Y EXTENSIONES ==="
@@ -27,10 +30,9 @@ jobs:
             make -C /usr/ports/databases/php85-mysqli package-recursive
             make -C /usr/ports/databases/php85-pdo package-recursive
             make -C /usr/ports/databases/php85-pdo_mysql package-recursive
-            echo "=== VALIDAR BINARIO Y SIMBOLOS ABI ==="
+            echo "=== VALIDAR BINARIO ==="
             pkg install -y /usr/ports/packages/All/php85-*.pkg
             /usr/local/bin/php -v
-            readelf -V /usr/local/bin/php | grep -E 'FBSD_1\.[89]' || true
             echo "=== REUNIR PAQUETES ==="
             mkdir -p "$GITHUB_WORKSPACE/paquetes-php-freebsd15"
             find /usr/ports/packages/All -maxdepth 1 -type f -name '*.pkg' -exec cp {} "$GITHUB_WORKSPACE/paquetes-php-freebsd15/" \;
